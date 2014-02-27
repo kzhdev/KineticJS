@@ -1,34 +1,34 @@
-(function() {
+(function(root) {
     var BATCH_DRAW_STOP_TIME_DIFF = 500;
 
     var now =(function() {
-      if (window.performance && window.performance.now) {
-        return function() {
-          return window.performance.now();
+        if (root.performance && root.performance.now) {
+            return function() {
+                return root.performance.now();
+            };
         }
-      }
-      else {
-        return function() {
-          return new Date().getTime();
-        } 
-      }
+        else {
+            return function() {
+                return new Date().getTime();
+            };
+        }
     })();
 
     var RAF = (function() {
-        return window.requestAnimationFrame
-            || window.webkitRequestAnimationFrame
-            || window.mozRequestAnimationFrame
-            || window.oRequestAnimationFrame
-            || window.msRequestAnimationFrame
+        return root.requestAnimationFrame
+            || root.webkitRequestAnimationFrame
+            || root.mozRequestAnimationFrame
+            || root.oRequestAnimationFrame
+            || root.msRequestAnimationFrame
             || FRAF;
     })();
 
     function FRAF(callback) {
-        window.setTimeout(callback, 1000 / 60);
+        root.setTimeout(callback, 1000 / 60);
     }
 
     function requestAnimFrame() {
-        return RAF.apply(window, arguments);
+        return RAF.apply(root, arguments);
     }
     
     /**
@@ -134,7 +134,7 @@
          * @memberof Kinetic.Animation.prototype
          */
         isRunning: function() {
-            var a = Kinetic.Animation, 
+            var a = Kinetic.Animation,
                 animations = a.animations,
                 len = animations.length,
                 n;
@@ -182,8 +182,8 @@
         this._handleAnimation();
     };
     Kinetic.Animation._removeAnimation = function(anim) {
-        var id = anim.id, 
-            animations = this.animations, 
+        var id = anim.id,
+            animations = this.animations,
             len = animations.length,
             n;
 
@@ -270,9 +270,9 @@
 
         if (!this.batchAnim) {
             this.batchAnim = new Anim(function() {
-              if (that.lastBatchDrawTime && now() - that.lastBatchDrawTime > BATCH_DRAW_STOP_TIME_DIFF) {
-                that.batchAnim.stop();
-              }
+                if (that.lastBatchDrawTime && now() - that.lastBatchDrawTime > BATCH_DRAW_STOP_TIME_DIFF) {
+                    that.batchAnim.stop();
+                }
             }, this);
         }
 
@@ -294,4 +294,4 @@
             layer.batchDraw();
         });
     };
-})();
+})(this);

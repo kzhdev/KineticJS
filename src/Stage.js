@@ -1,3 +1,4 @@
+/*jshint unused:false */
 (function() {
     // CONSTANTS
     var STAGE = 'Stage',
@@ -48,9 +49,9 @@
         eventsLength = EVENTS.length;
 
     function addEvent(ctx, eventName) {
-      ctx.content.addEventListener(eventName, function(evt) {
-        ctx[UNDERSCORE + eventName](evt);
-      }, false);
+        ctx.content.addEventListener(eventName, function(evt) {
+            ctx[UNDERSCORE + eventName](evt);
+        }, false);
     }
 
     Kinetic.Util.addMethods(Kinetic.Stage, {
@@ -151,6 +152,10 @@
 
             if(content && Kinetic.Util._isInDocument(content)) {
                 this.getContainer().removeChild(content);
+            }
+            var index = Kinetic.stages.indexOf(this);
+            if (index > -1) {
+                Kinetic.stages.splice(index, 1);
             }
         },
         /**
@@ -274,7 +279,7 @@
                 shape = layers[n].getIntersection(pos);
                 if (shape) {
                     return shape;
-                } 
+                }
             }
 
             return null;
@@ -336,28 +341,29 @@
             return this.getChildren();
         },
         _bindContentEvents: function() {
-            var that = this,
-                n;
-
-            for (n = 0; n < eventsLength; n++) {
-              addEvent(this, EVENTS[n]);
+            for (var n = 0; n < eventsLength; n++) {
+                addEvent(this, EVENTS[n]);
             }
         },
         _mouseover: function(evt) {
-            this._fire(CONTENT_MOUSEOVER, evt);
+            if (!Kinetic.UA.mobile) {
+                this._fire(CONTENT_MOUSEOVER, evt);
+            }
         },
         _mouseout: function(evt) {
-            this._setPointerPosition(evt);
-            var targetShape = this.targetShape;
+            if (!Kinetic.UA.mobile) {
+                this._setPointerPosition(evt);
+                var targetShape = this.targetShape;
 
-            if(targetShape && !Kinetic.isDragging()) {
-                targetShape._fireAndBubble(MOUSEOUT, evt);
-                targetShape._fireAndBubble(MOUSELEAVE, evt);
-                this.targetShape = null;
+                if(targetShape && !Kinetic.isDragging()) {
+                    targetShape._fireAndBubble(MOUSEOUT, evt);
+                    targetShape._fireAndBubble(MOUSELEAVE, evt);
+                    this.targetShape = null;
+                }
+                this.pointerPos = undefined;
+
+                this._fire(CONTENT_MOUSEOUT, evt);
             }
-            this.pointerPos = undefined;
-
-            this._fire(CONTENT_MOUSEOUT, evt);
         },
         _mousemove: function(evt) {
             this._setPointerPosition(evt);
@@ -369,6 +375,7 @@
 
                 if(shape && shape.isListening()) {
                     if(!this.targetShape || this.targetShape._id !== shape._id) {
+
                         if(this.targetShape) {
                             this.targetShape._fireAndBubble(MOUSEOUT, evt, shape);
                             this.targetShape._fireAndBubble(MOUSELEAVE, evt, shape);
@@ -408,18 +415,20 @@
             }
         },
         _mousedown: function(evt) {
-            this._setPointerPosition(evt);
-            var shape = this.getIntersection(this.getPointerPosition());
+            if (!Kinetic.UA.mobile) {
+                this._setPointerPosition(evt);
+                var shape = this.getIntersection(this.getPointerPosition());
 
-            Kinetic.listenClickTap = true;
+                Kinetic.listenClickTap = true;
 
-            if (shape && shape.isListening()) {
-                this.clickStartShape = shape;
-                shape._fireAndBubble(MOUSEDOWN, evt);
+                if (shape && shape.isListening()) {
+                    this.clickStartShape = shape;
+                    shape._fireAndBubble(MOUSEDOWN, evt);
+                }
+
+                // content event
+                this._fire(CONTENT_MOUSEDOWN, evt);
             }
-
-            // content event
-            this._fire(CONTENT_MOUSEDOWN, evt);
 
             // always call preventDefault for desktop events because some browsers
             // try to drag and drop the canvas element
@@ -428,46 +437,48 @@
             }
         },
         _mouseup: function(evt) {
-            this._setPointerPosition(evt);
-            var that = this,
-                shape = this.getIntersection(this.getPointerPosition()),
-                clickStartShape = this.clickStartShape,
-                fireDblClick = false;
+            if (!Kinetic.UA.mobile) {
+                this._setPointerPosition(evt);
+                var that = this,
+                    shape = this.getIntersection(this.getPointerPosition()),
+                    clickStartShape = this.clickStartShape,
+                    fireDblClick = false;
 
-            if(Kinetic.inDblClickWindow) {
-                fireDblClick = true;
-                Kinetic.inDblClickWindow = false;
-            }
-            else {
-                Kinetic.inDblClickWindow = true;
-            }
+                if(Kinetic.inDblClickWindow) {
+                    fireDblClick = true;
+                    Kinetic.inDblClickWindow = false;
+                }
+                else {
+                    Kinetic.inDblClickWindow = true;
+                }
 
-            setTimeout(function() {
-                Kinetic.inDblClickWindow = false;
-            }, Kinetic.dblClickWindow);
+                setTimeout(function() {
+                    Kinetic.inDblClickWindow = false;
+                }, Kinetic.dblClickWindow);
 
-            if (shape && shape.isListening()) {
-                shape._fireAndBubble(MOUSEUP, evt);
+                if (shape && shape.isListening()) {
+                    shape._fireAndBubble(MOUSEUP, evt);
 
-                // detect if click or double click occurred
-                if(Kinetic.listenClickTap && clickStartShape && clickStartShape._id === shape._id) {
-                    shape._fireAndBubble(CLICK, evt);
+                    // detect if click or double click occurred
+                    if(Kinetic.listenClickTap && clickStartShape && clickStartShape._id === shape._id) {
+                        shape._fireAndBubble(CLICK, evt);
 
-                    if(fireDblClick) {
-                        shape._fireAndBubble(DBL_CLICK, evt);
+                        if(fireDblClick) {
+                            shape._fireAndBubble(DBL_CLICK, evt);
+                        }
                     }
                 }
-            }
-            // content events
-            this._fire(CONTENT_MOUSEUP, evt);
-            if (Kinetic.listenClickTap) {
-                this._fire(CONTENT_CLICK, evt);
-                if(fireDblClick) {
-                    this._fire(CONTENT_DBL_CLICK, evt);
+                // content events
+                this._fire(CONTENT_MOUSEUP, evt);
+                if (Kinetic.listenClickTap) {
+                    this._fire(CONTENT_CLICK, evt);
+                    if(fireDblClick) {
+                        this._fire(CONTENT_DBL_CLICK, evt);
+                    }
                 }
-            }
 
-            Kinetic.listenClickTap = false;
+                Kinetic.listenClickTap = false;
+            }
 
             // always call preventDefault for desktop events because some browsers
             // try to drag and drop the canvas element
@@ -495,21 +506,20 @@
         },
         _touchend: function(evt) {
             this._setPointerPosition(evt);
-            var that = this,
-                shape = this.getIntersection(this.getPointerPosition());
+            var shape = this.getIntersection(this.getPointerPosition()),
                 fireDblClick = false;
 
-                if(Kinetic.inDblClickWindow) {
-                    fireDblClick = true;
-                    Kinetic.inDblClickWindow = false;
-                }
-                else {
-                    Kinetic.inDblClickWindow = true;
-                }
+            if(Kinetic.inDblClickWindow) {
+                fireDblClick = true;
+                Kinetic.inDblClickWindow = false;
+            }
+            else {
+                Kinetic.inDblClickWindow = true;
+            }
 
-                setTimeout(function() {
-                    Kinetic.inDblClickWindow = false;
-                }, Kinetic.dblClickWindow);
+            setTimeout(function() {
+                Kinetic.inDblClickWindow = false;
+            }, Kinetic.dblClickWindow);
 
             if (shape && shape.isListening()) {
                 shape._fireAndBubble(TOUCHEND, evt);
@@ -537,7 +547,7 @@
 
             Kinetic.listenClickTap = false;
         },
-        _touchmove: function(evt) {
+        _touchmove: Kinetic.Util._throttle(function(evt) {
             this._setPointerPosition(evt);
             var dd = Kinetic.DD,
                 shape = this.getIntersection(this.getPointerPosition());
@@ -556,15 +566,15 @@
             if(dd) {
                 dd._drag(evt);
             }
-        },
+        }, 17),
         _setPointerPosition: function(evt) {
-            var evt = evt ? evt : window.event,
-                contentPosition = this._getContentPosition(),
+            var contentPosition = this._getContentPosition(),
                 offsetX = evt.offsetX,
                 clientX = evt.clientX,
                 x = null,
                 y = null,
                 touch;
+            evt = evt ? evt : window.event;
 
             // touch events
             if(evt.touches !== undefined) {
@@ -575,7 +585,7 @@
 
                     // get the information for finger #1
                     x = touch.clientX - contentPosition.left;
-                    y = touch.clientY - contentPosition.top; 
+                    y = touch.clientY - contentPosition.top;
                 }
             }
             // mouse events

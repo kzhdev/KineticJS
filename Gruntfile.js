@@ -1,18 +1,18 @@
 module.exports = function(grunt) {
   var sourceFiles = [
     // core
-    'src/Global.js', 
-    'src/Util.js', 
+    'src/Global.js',
+    'src/Util.js',
     'src/Canvas.js',
     'src/Context.js',
     'src/Factory.js',
-    'src/Node.js', 
+    'src/Node.js',
 
     // filters 
-    'src/filters/Grayscale.js', 
-    'src/filters/Brighten.js', 
-    'src/filters/Invert.js', 
-    'src/filters/Blur.js', 
+    'src/filters/Grayscale.js',
+    'src/filters/Brighten.js',
+    'src/filters/Invert.js',
+    'src/filters/Blur.js',
     'src/filters/Mask.js',
     'src/filters/RGB.js',
     'src/filters/HSV.js',
@@ -28,36 +28,37 @@ module.exports = function(grunt) {
     'src/filters/Kaleidoscope.js',
     
     // core
-    'src/Animation.js', 
-    'src/Tween.js', 
-    'src/DragAndDrop.js', 
-    'src/Container.js', 
-    'src/Shape.js', 
-    'src/Stage.js', 
-    'src/Layer.js', 
+    'src/Animation.js',
+    'src/Tween.js',
+    'src/DragAndDrop.js',
+    'src/Container.js',
+    'src/Shape.js',
+    'src/Stage.js',
+    'src/Layer.js',
     'src/Group.js',
 
     // shapes
-    'src/shapes/Rect.js', 
-    'src/shapes/Circle.js', 
+    'src/shapes/Rect.js',
+    'src/shapes/Circle.js',
     'src/shapes/Ellipse.js',
     'src/shapes/Ring.js',
-    'src/shapes/Wedge.js', 
+    'src/shapes/Wedge.js',
     'src/shapes/Arc.js',
-    'src/shapes/Image.js', 
-    'src/shapes/Text.js', 
-    'src/shapes/Line.js', 
+    'src/shapes/Image.js',
+    'src/shapes/Text.js',
+    'src/shapes/Line.js',
     'src/shapes/Sprite.js',
 
     // plugins
-    'src/plugins/Path.js', 
-    'src/plugins/TextPath.js', 
-    'src/plugins/RegularPolygon.js', 
-    'src/plugins/Star.js', 
+    'src/plugins/Path.js',
+    'src/plugins/TextPath.js',
+    'src/plugins/RegularPolygon.js',
+    'src/plugins/Star.js',
     'src/plugins/Label.js'
   ];
 
   // Project configuration.
+  var lintConf = grunt.file.readJSON('.jshintrc');
   var config = {
     pkg: grunt.file.readJSON('package.json'),
     concat: {
@@ -91,7 +92,7 @@ module.exports = function(grunt) {
         },
 
         files: [{
-          src: ['dist/kinetic-dev.js'], 
+          src: ['dist/kinetic-dev.js'],
           dest: 'dist/kinetic-dev.js'
         }]
       },
@@ -108,7 +109,7 @@ module.exports = function(grunt) {
         },
 
         files: [{
-          src: ['dist/kinetic-v<%= pkg.version %>-beta.js'], 
+          src: ['dist/kinetic-v<%= pkg.version %>-beta.js'],
           dest: 'dist/kinetic-v<%= pkg.version %>-beta.js'
         }]
       },
@@ -125,7 +126,7 @@ module.exports = function(grunt) {
         },
 
         files: [{
-          src: ['dist/kinetic-v<%= pkg.version %>.js'], 
+          src: ['dist/kinetic-v<%= pkg.version %>.js'],
           dest: 'dist/kinetic-v<%= pkg.version %>.js'
         }]
       },
@@ -137,7 +138,7 @@ module.exports = function(grunt) {
           prefix: '@@'
         },
         files: [{
-          src: ['dist/kinetic-Global-v<%= pkg.version %>.min.js'], 
+          src: ['dist/kinetic-Global-v<%= pkg.version %>.min.js'],
           dest: 'dist/kinetic-Global-v<%= pkg.version %>.min.js'
         }]
       },
@@ -149,7 +150,7 @@ module.exports = function(grunt) {
           prefix: '@@'
         },
         files: [{
-          src: ['dist/kinetic-v<%= pkg.version %>.min.js'], 
+          src: ['dist/kinetic-v<%= pkg.version %>.min.js'],
           dest: 'dist/kinetic-v<%= pkg.version %>.min.js'
         }]
       },
@@ -161,7 +162,7 @@ module.exports = function(grunt) {
           prefix: '@@'
         },
         files: [{
-          src: ['bower-template.json'], 
+          src: ['bower-template.json'],
           dest: 'bower.json'
         }]
       }
@@ -180,9 +181,7 @@ module.exports = function(grunt) {
       build: ['dist/*']
     },
     jshint: {
-      options: {
-        laxbreak: true
-      },
+      options: lintConf,
       all: ['src/**/*.js']
     },
     copy: {
@@ -196,7 +195,29 @@ module.exports = function(grunt) {
         src: 'dist/kinetic-v<%= pkg.version %>.js',
         dest: 'kinetic.js',
       }
-    }
+    },
+    shell: {
+        jsdoc: {
+            options: {
+                stdout: true,
+                stderr : true,
+                failOnError : true
+            },
+            command: './node_modules/.bin/jsdoc ./dist/kinetic-v<%= pkg.version %>.js -d ./documentation'
+        }
+    },
+    mocha_phantomjs: {
+      all: ['test/runner.html']
+    },
+    watch: {
+      dev: {
+        files: ['src/**/*.js'],
+        tasks: ['dev'],
+        options: {
+          spawn: false,
+        },
+      },
+    },
   };
 
   
@@ -210,27 +231,48 @@ module.exports = function(grunt) {
   
   grunt.initConfig(config);
 
-  // Load plugins
+
+  // Tasks
+  grunt.registerTask('dev', 'Create dev version', ['clean', 'concat:dev', 'replace:dev']);
+  grunt.registerTask('beta', 'Create beta version', ['clean', 'concat:beta', 'replace:beta']);
+  grunt.registerTask('full', 'Build full version and create min files', [
+    'clean',
+    'concat:prod',
+    'uglify',
+    'replace:prod1',
+    'replace:prod2',
+    'replace:prod3',
+    'replace:prod4',
+    'copy:prod1',
+    'copy:prod2'
+  ]);
+
+  grunt.registerTask('gen-doc', 'Generate documentation to documentation folder', [
+    'full',
+    'shell:jsdoc',
+  ]);
+
+  grunt.registerTask('lint', 'Check lint errors', ['jshint']);
+  grunt.registerTask('test', 'Run tests', ['dev', 'mocha_phantomjs']);
+
+  grunt.registerTask('server', 'run local server and create dev version', function() {
+
+    grunt.task.run('dev');
+    grunt.log.writeln('Tests server starts on http://localhost:8080/test/runner.html');
+    var connect = require('connect');
+    connect.createServer(
+        connect.static(__dirname)
+    ).listen(8080);
+    grunt.task.run('watch:dev');
+  });
+
   grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-replace');
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-contrib-clean');
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-contrib-copy');
-
-  // Tasks
-  grunt.registerTask('dev', ['clean', 'concat:dev', 'replace:dev']);
-  grunt.registerTask('beta', ['clean', 'concat:beta', 'replace:beta']);
-  grunt.registerTask('full', [
-    'clean', 
-    'concat:prod', 
-    'uglify', 
-    'replace:prod1', 
-    'replace:prod2', 
-    'replace:prod3', 
-    'replace:prod4',
-    'copy:prod1', 
-    'copy:prod2'
-  ]);
-  grunt.registerTask('hint', ['clean', 'concat:dev', 'replace:dev', 'jshint']);
+  grunt.loadNpmTasks('grunt-shell');
+  grunt.loadNpmTasks('grunt-mocha-phantomjs');
+  grunt.loadNpmTasks('grunt-contrib-watch');
 };

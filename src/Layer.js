@@ -32,12 +32,18 @@
             this.hitCanvas = new Kinetic.HitCanvas();
             // call super constructor
             Kinetic.Container.call(this, config);
+            if (!Kinetic.Util.isBrowser()) {
+                this.canvas.setSize(this.attrs.width, this.attrs.height);
+            }
         },
         _validateAdd: function(child) {
             var type = child.getType();
             if (type !== 'Group' && type !== 'Shape') {
                 Kinetic.Util.error('You may only add groups and shapes to a layer.');
             }
+        },
+        createPNGStream : function() {
+            return this.canvas._canvas.createPNGStream();
         },
         /**
          * get visible intersection shape. This is the preferred
@@ -154,7 +160,7 @@
         /**
          * clear scene and hit canvas contexts tied to the layer
          * @method
-         * @memberof Kinetic.Node.prototype
+         * @memberof Kinetic.Layer.prototype
          * @param {Object} [bounds]
          * @param {Number} [bounds.x]
          * @param {Number} [bounds.y]
@@ -252,8 +258,8 @@
             return this;
         },
         remove: function() {
-            var stage = this.getStage(), 
-                canvas = this.getCanvas(), 
+            var stage = this.getStage(),
+                canvas = this.getCanvas(),
                 _canvas = canvas._canvas;
 
             Kinetic.Node.prototype.remove.call(this);
@@ -333,5 +339,5 @@
      * layer.hitGraphEnabled(true);
      */
 
-     Kinetic.Collection.mapMethods(Kinetic.Layer);
+    Kinetic.Collection.mapMethods(Kinetic.Layer);
 })();

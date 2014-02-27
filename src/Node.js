@@ -68,7 +68,7 @@
                 delete this._cache[attr];
             }
             else {
-                this._cache = {};   
+                this._cache = {};
             }
         },
         _getCache: function(attr, privateGetter){
@@ -79,7 +79,7 @@
                 this._cache[attr] = privateGetter.call(this);
             }
 
-            return this._cache[attr];     
+            return this._cache[attr];
         },
         /*
          * when the logic for a cached result depends on ancestor propagation, use this
@@ -118,7 +118,7 @@
         * @param {Number} [config.y]
         * @param {Number} [config.width]
         * @param {Number} [config.height]
-        * @param {Boolean} [config.showBorder] when set to true, a red border will be drawn around the cached
+        * @param {Boolean} [config.drawBorder] when set to true, a red border will be drawn around the cached
         *  region for debugging purposes
         * @returns {Kinetic.Node}
         * @example
@@ -260,9 +260,10 @@
                 hitCanvas = cachedCanvas.hit;
 
             context.save();
+
             context._applyTransform(this, context.canvas.isCache);
             context.drawImage(hitCanvas._canvas, 0, 0); 
-            context.restore(); 
+            context.restore();
         },
         /**
          * bind events to the node. KineticJS supports mouseover, mousemove,
@@ -388,6 +389,12 @@
                 }
             }
             return this;
+        },
+        dispatchEvent: function(evt) {
+            this.fire(evt.type, evt);
+        },
+        addEventListener: function() {
+            this.on.apply(this, arguments);
         },
         /**
          * remove self from parent, but don't destroy
@@ -1098,7 +1105,7 @@
                 transformsEnabled = node.transformsEnabled();
                 trans = node.getTransform();
 
-                if (transformsEnabled === 'all') { 
+                if (transformsEnabled === 'all') {
                     at.multiply(trans);
                 }
                 else if (transformsEnabled === 'position') {
@@ -1301,8 +1308,8 @@
          * @method
          * @memberof Kinetic.Node.prototype
          * @param {Object} size
-         * @param {Number} width
-         * @param {Number} height
+         * @param {Number} size.width
+         * @param {Number} size.height
          * @returns {Kinetic.Node}
          */
         setSize: function(size) {
