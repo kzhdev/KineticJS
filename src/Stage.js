@@ -78,7 +78,11 @@
          */
         setContainer: function(container) {
             if( typeof container === STRING) {
-                container = document.getElementById(container);
+                var id = container;
+                container = Kinetic.document.getElementById(container);
+                if (!container) {
+                    throw 'Can not find container in document with id ' + id;
+                }
             }
             this._setAttr(CONTAINER, container);
             return this;
@@ -217,7 +221,7 @@
             function drawLayer(n) {
                 var layer = layers[n],
                     layerUrl = layer.toDataURL(),
-                    imageObj = new Image();
+                    imageObj = new Kinetic.window.Image();
 
                 imageObj.onload = function() {
                     _context.drawImage(imageObj, 0, 0);
@@ -347,6 +351,7 @@
         },
         _mouseover: function(evt) {
             if (!Kinetic.UA.mobile) {
+                this._setPointerPosition(evt);
                 this._fire(CONTENT_MOUSEOVER, evt);
             }
         },
@@ -366,52 +371,54 @@
             }
         },
         _mousemove: function(evt) {
-            this._setPointerPosition(evt);
-            var dd = Kinetic.DD,
-                shape;
+            if (!Kinetic.UA.mobile) {
+                this._setPointerPosition(evt);
+                var dd = Kinetic.DD,
+                    shape;
 
-            if (!Kinetic.isDragging()) {
-                shape = this.getIntersection(this.getPointerPosition());
+                if (!Kinetic.isDragging()) {
+                    shape = this.getIntersection(this.getPointerPosition());
 
-                if(shape && shape.isListening()) {
-                    if(!this.targetShape || this.targetShape._id !== shape._id) {
+                    if(shape && shape.isListening()) {
+                        if(!this.targetShape || this.targetShape._id !== shape._id) {
 
-                        if(this.targetShape) {
-                            this.targetShape._fireAndBubble(MOUSEOUT, evt, shape);
-                            this.targetShape._fireAndBubble(MOUSELEAVE, evt, shape);
+                            if(this.targetShape) {
+                                this.targetShape._fireAndBubble(MOUSEOUT, evt, shape);
+                                this.targetShape._fireAndBubble(MOUSELEAVE, evt, shape);
+                            }
+                            shape._fireAndBubble(MOUSEOVER, evt, this.targetShape);
+                            shape._fireAndBubble(MOUSEENTER, evt, this.targetShape);
+                            this.targetShape = shape;
                         }
-                        shape._fireAndBubble(MOUSEOVER, evt, this.targetShape);
-                        shape._fireAndBubble(MOUSEENTER, evt, this.targetShape);
-                        this.targetShape = shape;
+                        else {
+                            shape._fireAndBubble(MOUSEMOVE, evt);
+                        }
                     }
+                    /*
+                     * if no shape was detected, clear target shape and try
+                     * to run mouseout from previous target shape
+                     */
                     else {
-                        shape._fireAndBubble(MOUSEMOVE, evt);
+                      if(this.targetShape) {
+                        this.targetShape._fireAndBubble(MOUSEOUT, evt);
+                        this.targetShape._fireAndBubble(MOUSELEAVE, evt);
+                        this.targetShape = null;
+                      }
                     }
                 }
-                /*
-                 * if no shape was detected, clear target shape and try
-                 * to run mouseout from previous target shape
-                 */
-                else {
-                  if(this.targetShape) {
-                    this.targetShape._fireAndBubble(MOUSEOUT, evt);
-                    this.targetShape._fireAndBubble(MOUSELEAVE, evt);
-                    this.targetShape = null;
-                  }
+
+                // content event
+                this._fire(CONTENT_MOUSEMOVE, evt);
+
+                if(dd) {
+                    dd._drag(evt);
                 }
-            }
-            
-            // content event
-            this._fire(CONTENT_MOUSEMOVE, evt);
 
-            if(dd) {
-                dd._drag(evt);
-            }
-
-            // always call preventDefault for desktop events because some browsers
-            // try to drag and drop the canvas element
-            if (evt.preventDefault) {
-                evt.preventDefault();
+                // always call preventDefault for desktop events because some browsers
+                // try to drag and drop the canvas element
+                if (evt.preventDefault) {
+                    evt.preventDefault();
+                }
             }
         },
         _mousedown: function(evt) {
@@ -547,7 +554,7 @@
 
             Kinetic.listenClickTap = false;
         },
-        _touchmove: Kinetic.Util._throttle(function(evt) {
+        _touchmove: function(evt) {
             this._setPointerPosition(evt);
             var dd = Kinetic.DD,
                 shape = this.getIntersection(this.getPointerPosition());
@@ -566,7 +573,7 @@
             if(dd) {
                 dd._drag(evt);
             }
-        }, 17),
+        },
         _setPointerPosition: function(evt) {
             var contentPosition = this._getContentPosition(),
                 offsetX = evt.offsetX,
@@ -626,12 +633,19 @@
         },
         _buildDOM: function() {
             var container = this.getContainer();
-
+            if (!container) {
+                if (Kinetic.Util.isBrowser()) {
+                    throw 'Stage has not container. But container is required';
+                } else {
+                    // automatically create element for jsdom in nodejs env
+                container = Kinetic.document.createElement(DIV);
+                }
+            }
             // clear content inside container
             container.innerHTML = EMPTY_STRING;
 
             // content
-            this.content = document.createElement(DIV);
+            this.content = Kinetic.document.createElement(DIV);
             this.content.style.position = RELATIVE;
             this.content.style.display = INLINE_BLOCK;
             this.content.className = KINETICJS_CONTENT;

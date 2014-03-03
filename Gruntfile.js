@@ -58,7 +58,7 @@ module.exports = function(grunt) {
   ];
 
   // Project configuration.
-  var lintConf = grunt.file.readJSON('.jshintrc');
+  var hintConf = grunt.file.readJSON('.jshintrc');
   var config = {
     pkg: grunt.file.readJSON('package.json'),
     concat: {
@@ -181,7 +181,7 @@ module.exports = function(grunt) {
       build: ['dist/*']
     },
     jshint: {
-      options: lintConf,
+      options: hintConf,
       all: ['src/**/*.js']
     },
     copy: {
@@ -247,12 +247,12 @@ module.exports = function(grunt) {
     'copy:prod2'
   ]);
 
-  grunt.registerTask('gen-doc', 'Generate documentation to documentation folder', [
+  grunt.registerTask('docs', 'Generate documentation to documentation folder', [
     'full',
     'shell:jsdoc',
   ]);
 
-  grunt.registerTask('lint', 'Check lint errors', ['jshint']);
+  grunt.registerTask('hint', 'Check hint errors', ['jshint']);
   grunt.registerTask('test', 'Run tests', ['dev', 'mocha_phantomjs']);
 
   grunt.registerTask('server', 'run local server and create dev version', function() {

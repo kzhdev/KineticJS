@@ -24,6 +24,7 @@
         TRANSFORM = 'transform',
         UPPER_STAGE = 'Stage',
         VISIBLE = 'visible',
+        CLONE_BLACK_LIST = ['id'],
 
         TRANSFORM_CHANGE_STR = [
             'xChange.kinetic',
@@ -37,6 +38,7 @@
             'offsetYChange.kinetic',
             'transformsEnabledChange.kinetic'
         ].join(SPACE);
+
 
     Kinetic.Util.addMethods(Kinetic.Node, {
         _init: function(config) {
@@ -393,7 +395,9 @@
             }
             return this;
         },
+        // some event aliases for third party integration like HammerJS 
         dispatchEvent: function(evt) {
+            evt.targetNode = this;
             this.fire(evt.type, evt);
         },
         addEventListener: function() {
@@ -876,6 +880,10 @@
          * @returns {Boolean}
          */
         moveToTop: function() {
+            if (!this.parent) {
+                Kinetic.Util.warn('Node has no parent. moveToTop function is ignored.');
+                return;
+            }
             var index = this.index;
             this.parent.children.splice(index, 1);
             this.parent.children.push(this);
@@ -889,6 +897,10 @@
          * @returns {Boolean}
          */
         moveUp: function() {
+            if (!this.parent) {
+                Kinetic.Util.warn('Node has no parent. moveUp function is ignored.');
+                return;
+            }
             var index = this.index,
                 len = this.parent.getChildren().length;
             if(index < len - 1) {
@@ -906,6 +918,10 @@
          * @returns {Boolean}
          */
         moveDown: function() {
+            if (!this.parent) {
+                Kinetic.Util.warn('Node has no parent. moveDown function is ignored.');
+                return;
+            }
             var index = this.index;
             if(index > 0) {
                 this.parent.children.splice(index, 1);
@@ -922,6 +938,10 @@
          * @returns {Boolean}
          */
         moveToBottom: function() {
+            if (!this.parent) {
+                Kinetic.Util.warn('Node has no parent. moveToBottom function is ignored.');
+                return;
+            }
             var index = this.index;
             if(index > 0) {
                 this.parent.children.splice(index, 1);
@@ -939,6 +959,10 @@
          * @returns {Kinetic.Node}
          */
         setZIndex: function(zIndex) {
+            if (!this.parent) {
+                Kinetic.Util.warn('Node has no parent. zIndex parameter is ignored.');
+                return;
+            }
             var index = this.index;
             this.parent.children.splice(index, 1);
             this.parent.children.splice(zIndex, 0, this);
@@ -1223,9 +1247,14 @@
         clone: function(obj) {
             // instantiate new node
             var className = this.getClassName(),
-                node = new Kinetic[className](this.attrs),
+                attrs = this.attrs,
                 key, allListeners, len, n, listener;
-
+            // filter black attrs
+            for (var i in CLONE_BLACK_LIST) {
+                var blockAttr = CLONE_BLACK_LIST[i];
+                delete attrs[blockAttr];
+            }
+            var node = new Kinetic[className](attrs);
             // copy over listeners
             for(key in this.eventListeners) {
                 allListeners = this.eventListeners[key];
