@@ -183,6 +183,30 @@ suite('Node', function() {
     });
 
     // ======================================================
+    test('has shadow', function() {
+        var stage = addStage();
+        var layer = new Kinetic.Layer();
+        var rect = new Kinetic.Rect({
+            x: 10,
+            y: stage.getHeight() / 3,
+            width: 100,
+            height: 100,
+            fill : "red",
+            stroke: 'black',
+            strokeWidth: 4,
+            draggable: true
+        });
+        layer.add(rect);
+        stage.add(layer);
+        rect.shadowEnabled(true);
+        rect.shadowColor("grey");
+        assert.equal(rect.hasShadow(), true);
+        rect.shadowEnabled(false);
+        assert.equal(rect.hasShadow(), false);
+
+    });
+
+    // ======================================================
     test('opacity cache', function() {
         var stage = addStage();
         var layer = new Kinetic.Layer();
@@ -848,25 +872,7 @@ suite('Node', function() {
         var layer = new Kinetic.Layer();
         var group = new Kinetic.Group();
 
-        var points = [{
-            x: 73,
-            y: 250
-        }, {
-            x: 73,
-            y: 160
-        }, {
-            x: 340,
-            y: 23
-        }, {
-            x: 500,
-            y: 109
-        }, {
-            x: 499,
-            y: 139
-        }, {
-            x: 342,
-            y: 93
-        }];
+        var points = [73, 250, 73, 160, 340, 23, 500, 109, 499, 139, 342, 93];
 
         var poly = new Kinetic.Line({
             points: points,
