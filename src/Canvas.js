@@ -2,6 +2,7 @@
     // calculate pixel ratio
     var canvas = Kinetic.Util.createCanvasElement(),
         context = canvas.getContext('2d'),
+
         // if using a mobile device, calculate the pixel ratio.  Otherwise, just use
         // 1.  For desktop browsers, if the user has zoom enabled, it affects the pixel ratio
         // and causes artifacts on the canvas.  As of 02/26/2014, there doesn't seem to be a way
@@ -17,6 +18,7 @@
                 || 1;
             return devicePixelRatio / backingStoreRatio;
         })() : 1;
+        Kinetic.pixelRatio = Kinetic.pixelRatio || _pixelRatio;
 
     /**
      * Canvas Renderer constructor
@@ -41,9 +43,7 @@
         init: function(config) {
             config = config || {};
 
-            var pixelRatio = config.pixelRatio || Kinetic.pixelRatio || _pixelRatio;
-
-            this.pixelRatio = pixelRatio;
+            this.pixelRatio = config.pixelRatio || Kinetic.pixelRatio || _pixelRatio;
             this._canvas = Kinetic.Util.createCanvasElement();
 
             // set inline styles
@@ -74,10 +74,10 @@
             return this.pixelRatio;
         },
         /**
-         * get pixel ratio
+         * set pixel ratio
          * @method
          * @memberof Kinetic.Canvas.prototype
-         * @param {Number} pixelRatio KineticJS automatically handles pixel ratio adustments in order to render crisp drawings 
+         * @param {Number} pixelRatio KineticJS automatically handles pixel ratio adjustments in order to render crisp drawings 
          *  on all devices. Most desktops, low end tablets, and low end phones, have device pixel ratios
          *  of 1.  Some high end tablets and phones, like iPhones and iPads (not the mini) have a device pixel ratio 
          *  of 2.  Some Macbook Pros, and iMacs also have a device pixel ratio of 2.  Some high end Android devices have pixel 
@@ -86,8 +86,12 @@
          *  ratio for special situations, or, if you don't want the pixel ratio to be taken into account, you can set it to 1.
          */
         setPixelRatio: function(pixelRatio) {
+            // get the original widht and height, take into account pixel ratio
+            var width = this.getWidth() / this.pixelRatio,
+                height = this.getHeight() / this.pixelRatio;
+
             this.pixelRatio = pixelRatio;
-            this.setSize(this.getWidth(), this.getHeight());
+            this.setSize(width, height);
         },
         /**
          * set width
@@ -202,7 +206,14 @@
         Kinetic.Canvas.call(this, config);
         this.context = new Kinetic.HitContext(this);
         this.setSize(width, height);
+        this.context._context.scale(this.pixelRatio, this.pixelRatio);
     };
+    Kinetic.HitCanvas.prototype = {
+        setPixelRatio: function(pixelRatio) {
+            Kinetic.Canvas.prototype.setPixelRatio.call(this, pixelRatio);
+            this.context._context.scale(pixelRatio, pixelRatio);
+        }
+    }
     Kinetic.Util.extend(Kinetic.HitCanvas, Kinetic.Canvas);
 
 })();
